@@ -1,3 +1,4 @@
+pragma solidity ^0.5.0;
 contract SnailTracer {
   // Image properties for the path tracer
   int    width;  // Width of the image being generated, fixed for life
@@ -13,7 +14,7 @@ contract SnailTracer {
 
   // SnailTracer is the ray tracer constructor to create the scene and pre-calculate
   // some constants that are the same throughout the path tracing procedure.
-  function SnailTracer(int w, int h) {
+  constructor(int w, int h) public {
     // Initialize the image parameters
     width  = w;
     height = h;
@@ -63,20 +64,20 @@ contract SnailTracer {
   // TracePixel traces a single pixel of the configured image and returns the RGB
   // values to the caller. This method is meant to be used specifically for high
   // SPP renderings which would have a huge overhead otherwise.
-  function TracePixel(int x, int y, int spp) constant returns (byte r, byte g, byte b) {
+  function TracePixel(int x, int y, int spp) public returns (byte r, byte g, byte b) {
     Vector memory color = trace(x, y, spp);
-    return (byte(color.x), byte(color.y), byte(color.z));
+    return (byte(int8(color.x)), byte(int8(color.y)), byte(int8(color.z)));
   }
   // TraceScanline traces a single horizontal scanline of the configured image and
   // returns the RGB pixel value array. This method should be used for lower SPP
   // rendering to void the overhead of by-pixel EVM calls.
-  function TraceScanline(int y, int spp) constant returns (bytes) {
+  function TraceScanline(int y, int spp) public returns (bytes memory) {
     for (int x = 0; x < width; x++) {
       Vector memory color = trace(x, y, spp);
 
-      buffer.push(byte(color.x));
-      buffer.push(byte(color.y));
-      buffer.push(byte(color.z));
+      buffer.push(byte(int8(color.x)));
+      buffer.push(byte(int8(color.y)));
+      buffer.push(byte(int8(color.z)));
     }
     return buffer;
   }
@@ -84,21 +85,21 @@ contract SnailTracer {
   // RGB pixel value array containing all the data top-down, left-to-right. This
   // method should only be callsed for very small images and SPP values as the
   // cumulative gas and memory costs can push the EVM too hard.
-  function TraceImage(int spp) constant returns (bytes) {
+  function TraceImage(int spp) public returns (bytes memory) {
     for (int y = height - 1; y >= 0; y--) {
       for (int x = 0; x < width; x++) {
         Vector memory color = trace(x, y, spp);
 
-        buffer.push(byte(color.x));
-        buffer.push(byte(color.y));
-        buffer.push(byte(color.z));
+        buffer.push(byte(int8(color.x)));
+        buffer.push(byte(int8(color.y)));
+        buffer.push(byte(int8(color.z)));
       }
     }
     return buffer;
   }
   // Benchmark sets up an ephemeral image configuration and traces a select few
   // hand picked pixels to measure EVM execution performance.
-  function Benchmark() constant returns (byte r, byte g, byte b) {
+  function Benchmark() public returns (byte r, byte g, byte b) {
     // Configure the scene for benchmarking
     width = 1024; height = 768;
 
@@ -114,11 +115,11 @@ contract SnailTracer {
     color = add(color, trace(522, 524, 8)); // Reflective surface mirroring the refractive surface reflecting the light
     color = div(color, 4);
 
-    return (byte(color.x), byte(color.y), byte(color.z));
+    return (byte(int8(color.x)), byte(int8(color.y)), byte(int8(color.z)));
   }
   // trace executes the path tracing for a single pixel of the result image and
-  // returns the RGB color vector normalized to [0, 256) value range.
-  function trace(int x, int y, int spp) internal returns (Vector color) {
+  // returns the RGB color Vector normalized to [0, 256) value range.
+  function trace(int x, int y, int spp) internal returns (Vector memory color) {
     seed = uint32(y * width + x); // Deterministic image irrelevant of render chunks
 
     delete(color);
@@ -186,32 +187,32 @@ contract SnailTracer {
     int x; int y; int z;
   }
 
-  function add(Vector u, Vector v) internal returns (Vector) {
+  function add(Vector memory u, Vector memory v) internal returns (Vector memory) {
     return Vector(u.x+v.x, u.y+v.y, u.z+v.z);
   }
-  function sub(Vector u, Vector v) internal returns (Vector) {
+  function sub(Vector memory u, Vector memory v) internal returns (Vector memory) {
     return Vector(u.x-v.x, u.y-v.y, u.z-v.z);
   }
-  function mul(Vector v, int m) internal returns (Vector) {
+  function mul(Vector memory v, int m) internal returns (Vector memory) {
     return Vector(m*v.x, m*v.y, m*v.z);
   }
-  function mul(Vector u, Vector v) internal returns (Vector) {
+  function mul(Vector memory u, Vector memory v) internal returns (Vector memory) {
     return Vector(u.x*v.x, u.y*v.y, u.z*v.z);
   }
-  function div(Vector v, int d) internal returns (Vector) {
+  function div(Vector memory v, int d) internal returns (Vector memory) {
     return Vector(v.x/d, v.y/d, v.z/d);
   }
-  function dot(Vector u, Vector v) internal returns (int) {
+  function dot(Vector memory u, Vector memory v) internal returns (int) {
     return u.x*v.x + u.y*v.y + u.z*v.z;
   }
-  function cross(Vector u, Vector v) internal returns (Vector) {
+  function cross(Vector memory u, Vector memory v) internal returns (Vector memory) {
     return Vector(u.y*v.z - u.z*v.y, u.z*v.x - u.x*v.z, u.x*v.y - u.y*v.x);
   }
-  function norm(Vector v) internal returns (Vector) {
+  function norm(Vector memory v) internal returns (Vector memory) {
     int length = sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
     return Vector(v.x * 1000000 / length, v.y * 1000000 / length, v.z * 1000000 / length);
   }
-  function clamp(Vector v) internal returns (Vector) {
+  function clamp(Vector memory v) internal returns (Vector memory) {
     return Vector(clamp(v.x), clamp(v.y), clamp(v.z));
   }
   // Ray is a parametric line with an origin and a direction.
@@ -249,7 +250,7 @@ contract SnailTracer {
 
   // intersect calculates the intersection of a ray with a sphere, returning the
   // distance till the first intersection point or zero in case of no intersection.
-  function intersect(Sphere s, Ray r) internal returns (int) {
+  function intersect(Sphere memory s, Ray memory r) internal returns (int) {
     Vector memory op = sub(s.position, r.origin);
 
     int b   = dot(op, r.direction) / 1000000;
@@ -269,7 +270,7 @@ contract SnailTracer {
     }
     return 0;
   }
-  function intersect(Triangle t, Ray r) internal returns (int) {
+  function intersect(Triangle memory t, Ray memory r) internal returns (int) {
     Vector memory e1 = sub(t.b, t.a);
     Vector memory e2 = sub(t.c, t.a);
 
@@ -301,7 +302,7 @@ contract SnailTracer {
     }
     return dist;
   }
-  function radiance(Ray ray) internal returns (Vector) {
+  function radiance(Ray memory ray) internal returns (Vector memory) {
     // Place a limit on the depth to prevent stack overflows
     if (ray.depth > 10) {
       return Vector(0, 0, 0);
@@ -353,7 +354,7 @@ contract SnailTracer {
     }
     return add(emission, div(mul(color, result), 1000000));
   }
-  function radiance(Ray ray, Sphere obj, int dist) internal returns (Vector) {
+  function radiance(Ray memory ray, Sphere memory obj, int dist) internal returns (Vector memory) {
     // Calculate the sphere intersection point and normal vectors for recursion
     Vector memory intersect = add(ray.origin, div(mul(ray.direction, dist), 1000000));
     Vector memory normal    = norm(sub(intersect, obj.position));
@@ -368,7 +369,7 @@ contract SnailTracer {
       return specular(ray, intersect, normal);
     }
   }
-  function radiance(Ray ray, Triangle obj, int dist) internal returns (Vector) {
+  function radiance(Ray memory ray, Triangle memory obj, int dist) internal returns (Vector memory) {
     // Calculate the triangle intersection point for refraction
     // We're cheating here, we don't have diffuse triangles :P
     Vector memory intersect = add(ray.origin, div(mul(ray.direction, dist), 1000000));
@@ -389,7 +390,7 @@ contract SnailTracer {
     }
     return refractive(ray, intersect, obj.normal, nnt, ddn, cos2t);
   }
-  function diffuse(Ray ray, Vector intersect, Vector normal) internal returns (Vector) {
+  function diffuse(Ray memory ray, Vector memory intersect, Vector memory normal) internal returns (Vector memory) {
     // Generate a random angle and distance from center
     int r1 = int(6283184) * (rand() % 1000000) / 1000000;
     int r2 = rand() % 1000000; int r2s = sqrt(r2) * 1000;
@@ -408,11 +409,11 @@ contract SnailTracer {
     u = norm(add(add(mul(u, cos(r1) * r2s / 1000000), mul(v, sin(r1) * r2s / 1000000)), mul(normal, sqrt(1000000 - r2) * 1000)));
     return radiance(Ray(intersect, u, ray.depth, ray.refract));
   }
-  function specular(Ray ray, Vector intersect, Vector normal) internal returns (Vector) {
+  function specular(Ray memory ray, Vector memory intersect, Vector memory normal) internal returns (Vector memory) {
     Vector memory reflection = norm(sub(ray.direction, mul(normal, 2 * dot(normal, ray.direction) / 1000000)));
     return radiance(Ray(intersect, reflection, ray.depth, ray.refract));
   }
-  function refractive(Ray ray, Vector intersect, Vector normal, int nnt, int ddn, int cos2t) internal returns (Vector) {
+  function refractive(Ray memory ray, Vector memory intersect, Vector memory normal, int nnt, int ddn, int cos2t) internal returns (Vector memory) {
     // Calculate the refraction rays for fresnel effects
     int sign = -1; if (ray.refract) { sign = 1; }
     Vector memory refraction = norm(div(sub(mul(ray.direction, nnt), mul(normal, sign * (ddn * nnt / 1000000 + sqrt(cos2t)))), 1000000));
@@ -437,7 +438,7 @@ contract SnailTracer {
   }
   // traceray calculates the intersection of a ray with all the objects and
   // returns the closest one.
-  function traceray(Ray ray) internal returns (int, Primitive, uint) {
+  function traceray(Ray memory ray) internal returns (int, Primitive, uint) {
     int dist = 0; Primitive p; uint id;
 
     // Intersect the ray with all the spheres
@@ -448,8 +449,8 @@ contract SnailTracer {
       }
     }
     // Intersect the ray with all the triangles
-    for (i=0; i<triangles.length; i++) {
-      d = intersect(triangles[i], ray);
+    for (uint i=0; i<triangles.length; i++) {
+      int d = intersect(triangles[i], ray);
       if (d > 0 && (dist == 0 || d < dist)) {
         dist = d; p = Primitive.Triangle; id = i;
       }
