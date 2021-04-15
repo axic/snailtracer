@@ -138,13 +138,13 @@ contract SnailTracer {
     return seed;
   }
   // Clamp bounds an int value to the allowed [0, 1] range.
-  function clamp(int x) internal returns (int) {
+  function clamp(int x) pure internal returns (int) {
     if (x < 0) { return 0; }
     if (x > 1000000) { return 1000000; }
     return x;
   }
   // Square root calculation based on the Babylonian method
-  function sqrt(int x) internal returns (int y) {
+  function sqrt(int x) pure internal returns (int y) {
     int z = (x + 1) / 2;
     y = x;
     while (z < y) {
@@ -153,7 +153,7 @@ contract SnailTracer {
     }
   }
   // Sine calculation based on Taylor series expansion.
-  function sin(int x) internal returns (int y) {
+  function sin(int x) pure internal returns (int y) {
     // Ensure x is between [0, 2PI) (Taylor expansion is picky with large numbers)
     while (x < 0) {
       x += 6283184;
@@ -172,11 +172,12 @@ contract SnailTracer {
     }
   }
   // Cosine calculation based on sine and Pythagorean identity.
-  function cos(int x) internal returns (int) {
-    int s = sin(x); return sqrt(1000000000000 - s*s);
+  function cos(int x) pure internal returns (int) {
+    int s = sin(x);
+    return sqrt(1000000000000 - s*s);
   }
   // Abs returns the absolute value of x.
-  function abs(int x) internal returns (int) {
+  function abs(int x) pure internal returns (int) {
     if (x > 0) {
       return x;
     }
@@ -187,32 +188,32 @@ contract SnailTracer {
     int x; int y; int z;
   }
 
-  function add(Vector memory u, Vector memory v) internal returns (Vector memory) {
+  function add(Vector memory u, Vector memory v) pure internal returns (Vector memory) {
     return Vector(u.x+v.x, u.y+v.y, u.z+v.z);
   }
-  function sub(Vector memory u, Vector memory v) internal returns (Vector memory) {
+  function sub(Vector memory u, Vector memory v) pure internal returns (Vector memory) {
     return Vector(u.x-v.x, u.y-v.y, u.z-v.z);
   }
-  function mul(Vector memory v, int m) internal returns (Vector memory) {
+  function mul(Vector memory v, int m) pure internal returns (Vector memory) {
     return Vector(m*v.x, m*v.y, m*v.z);
   }
-  function mul(Vector memory u, Vector memory v) internal returns (Vector memory) {
+  function mul(Vector memory u, Vector memory v) pure internal returns (Vector memory) {
     return Vector(u.x*v.x, u.y*v.y, u.z*v.z);
   }
-  function div(Vector memory v, int d) internal returns (Vector memory) {
+  function div(Vector memory v, int d) pure internal returns (Vector memory) {
     return Vector(v.x/d, v.y/d, v.z/d);
   }
-  function dot(Vector memory u, Vector memory v) internal returns (int) {
+  function dot(Vector memory u, Vector memory v) pure internal returns (int) {
     return u.x*v.x + u.y*v.y + u.z*v.z;
   }
-  function cross(Vector memory u, Vector memory v) internal returns (Vector memory) {
+  function cross(Vector memory u, Vector memory v) pure internal returns (Vector memory) {
     return Vector(u.y*v.z - u.z*v.y, u.z*v.x - u.x*v.z, u.x*v.y - u.y*v.x);
   }
-  function norm(Vector memory v) internal returns (Vector memory) {
+  function norm(Vector memory v) pure internal returns (Vector memory) {
     int length = sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
     return Vector(v.x * 1000000 / length, v.y * 1000000 / length, v.z * 1000000 / length);
   }
-  function clamp(Vector memory v) internal returns (Vector memory) {
+  function clamp(Vector memory v) pure internal returns (Vector memory) {
     return Vector(clamp(v.x), clamp(v.y), clamp(v.z));
   }
   // Ray is a parametric line with an origin and a direction.
@@ -250,7 +251,7 @@ contract SnailTracer {
 
   // intersect calculates the intersection of a ray with a sphere, returning the
   // distance till the first intersection point or zero in case of no intersection.
-  function intersect(Sphere memory s, Ray memory r) internal returns (int) {
+  function intersect(Sphere memory s, Ray memory r) pure internal returns (int) {
     Vector memory op = sub(s.position, r.origin);
 
     int b   = dot(op, r.direction) / 1000000;
@@ -270,7 +271,7 @@ contract SnailTracer {
     }
     return 0;
   }
-  function intersect(Triangle memory t, Ray memory r) internal returns (int) {
+  function intersect(Triangle memory t, Ray memory r) pure internal returns (int) {
     Vector memory e1 = sub(t.b, t.a);
     Vector memory e2 = sub(t.c, t.a);
 
@@ -438,7 +439,7 @@ contract SnailTracer {
   }
   // traceray calculates the intersection of a ray with all the objects and
   // returns the closest one.
-  function traceray(Ray memory ray) internal returns (int, Primitive, uint) {
+  function traceray(Ray memory ray) view internal returns (int, Primitive, uint) {
     int dist = 0; Primitive p; uint id;
 
     // Intersect the ray with all the spheres
