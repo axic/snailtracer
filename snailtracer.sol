@@ -65,9 +65,9 @@ contract SnailTracer {
   // TracePixel traces a single pixel of the configured image and returns the RGB
   // values to the caller. This method is meant to be used specifically for high
   // SPP renderings which would have a huge overhead otherwise.
-  function TracePixel(int x, int y, int spp) public returns (byte r, byte g, byte b) {
+  function TracePixel(int x, int y, int spp) public returns (bytes1 r, bytes1 g, bytes1 b) {
     Vector memory color = trace(x, y, spp);
-    return (byte(int8(color.x)), byte(int8(color.y)), byte(int8(color.z)));
+    return (bytes1(int8(color.x)), bytes1(int8(color.y)), bytes1(int8(color.z)));
   }
   // TraceScanline traces a single horizontal scanline of the configured image and
   // returns the RGB pixel value array. This method should be used for lower SPP
@@ -76,9 +76,9 @@ contract SnailTracer {
     for (int x = 0; x < width; x++) {
       Vector memory color = trace(x, y, spp);
 
-      buffer.push(byte(int8(color.x)));
-      buffer.push(byte(int8(color.y)));
-      buffer.push(byte(int8(color.z)));
+      buffer.push(bytes1(int8(color.x)));
+      buffer.push(bytes1(int8(color.y)));
+      buffer.push(bytes1(int8(color.z)));
     }
     return buffer;
   }
@@ -91,16 +91,16 @@ contract SnailTracer {
       for (int x = 0; x < width; x++) {
         Vector memory color = trace(x, y, spp);
 
-        buffer.push(byte(int8(color.x)));
-        buffer.push(byte(int8(color.y)));
-        buffer.push(byte(int8(color.z)));
+        buffer.push(bytes1(int8(color.x)));
+        buffer.push(bytes1(int8(color.y)));
+        buffer.push(bytes1(int8(color.z)));
       }
     }
     return buffer;
   }
   // Benchmark sets up an ephemeral image configuration and traces a select few
   // hand picked pixels to measure EVM execution performance.
-  function Benchmark() public returns (byte r, byte g, byte b) {
+  function Benchmark() public returns (bytes1 r, bytes1 g, bytes1 b) {
     // Configure the scene for benchmarking
     width = 1024; height = 768;
 
@@ -116,7 +116,7 @@ contract SnailTracer {
     color = add(color, trace(522, 524, 8)); // Reflective surface mirroring the refractive surface reflecting the light
     color = div(color, 4);
 
-    return (byte(int8(color.x)), byte(int8(color.y)), byte(int8(color.z)));
+    return (bytes1(int8(color.x)), bytes1(int8(color.y)), bytes1(int8(color.z)));
   }
   // trace executes the path tracing for a single pixel of the result image and
   // returns the RGB color Vector normalized to [0, 256) value range.
