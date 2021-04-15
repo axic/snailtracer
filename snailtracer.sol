@@ -1,4 +1,5 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity >=0.5.0 <0.8.0;
 contract SnailTracer {
   // Image properties for the path tracer
   int    width;  // Width of the image being generated, fixed for life
