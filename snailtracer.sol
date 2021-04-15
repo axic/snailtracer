@@ -356,23 +356,23 @@ contract SnailTracer {
   }
   function radiance(Ray memory ray, Sphere memory obj, int dist) internal returns (Vector memory) {
     // Calculate the sphere intersection point and normal vectors for recursion
-    Vector memory intersect = add(ray.origin, div(mul(ray.direction, dist), 1000000));
-    Vector memory normal    = norm(sub(intersect, obj.position));
+    Vector memory intersection = add(ray.origin, div(mul(ray.direction, dist), 1000000));
+    Vector memory normal       = norm(sub(intersection, obj.position));
 
     // For diffuse reflectivity
     if (obj.reflection == Material.Diffuse) {
       if (dot(normal, ray.direction) >= 0) {
         normal = mul(normal, -1);
       }
-      return diffuse(ray, intersect, normal);
+      return diffuse(ray, intersection, normal);
     } else { // For specular reflectivity
-      return specular(ray, intersect, normal);
+      return specular(ray, intersection, normal);
     }
   }
   function radiance(Ray memory ray, Triangle memory obj, int dist) internal returns (Vector memory) {
     // Calculate the triangle intersection point for refraction
     // We're cheating here, we don't have diffuse triangles :P
-    Vector memory intersect = add(ray.origin, div(mul(ray.direction, dist), 1000000));
+    Vector memory intersection = add(ray.origin, div(mul(ray.direction, dist), 1000000));
 
     // Calculate the refractive indices based on whether we're in or out
     int nnt = 666666; // (1 air / 1.5 glass)
@@ -386,11 +386,11 @@ contract SnailTracer {
     // If the angle is too shallow, all light is reflected
     int cos2t = 1000000000000 - nnt * nnt * (1000000000000 - ddn * ddn) / 1000000000000;
     if (cos2t < 0) {
-      return specular(ray, intersect, obj.normal);
+      return specular(ray, intersection, obj.normal);
     }
-    return refractive(ray, intersect, obj.normal, nnt, ddn, cos2t);
+    return refractive(ray, intersection, obj.normal, nnt, ddn, cos2t);
   }
-  function diffuse(Ray memory ray, Vector memory intersect, Vector memory normal) internal returns (Vector memory) {
+  function diffuse(Ray memory ray, Vector memory intersection, Vector memory normal) internal returns (Vector memory) {
     // Generate a random angle and distance from center
     int r1 = int(6283184) * (rand() % 1000000) / 1000000;
     int r2 = rand() % 1000000; int r2s = sqrt(r2) * 1000;
@@ -407,13 +407,13 @@ contract SnailTracer {
 
     // Generate the random reflection ray and continue path tracing
     u = norm(add(add(mul(u, cos(r1) * r2s / 1000000), mul(v, sin(r1) * r2s / 1000000)), mul(normal, sqrt(1000000 - r2) * 1000)));
-    return radiance(Ray(intersect, u, ray.depth, ray.refract));
+    return radiance(Ray(intersection, u, ray.depth, ray.refract));
   }
-  function specular(Ray memory ray, Vector memory intersect, Vector memory normal) internal returns (Vector memory) {
+  function specular(Ray memory ray, Vector memory intersection, Vector memory normal) internal returns (Vector memory) {
     Vector memory reflection = norm(sub(ray.direction, mul(normal, 2 * dot(normal, ray.direction) / 1000000)));
-    return radiance(Ray(intersect, reflection, ray.depth, ray.refract));
+    return radiance(Ray(intersection, reflection, ray.depth, ray.refract));
   }
-  function refractive(Ray memory ray, Vector memory intersect, Vector memory normal, int nnt, int ddn, int cos2t) internal returns (Vector memory) {
+  function refractive(Ray memory ray, Vector memory intersection, Vector memory normal, int nnt, int ddn, int cos2t) internal returns (Vector memory) {
     // Calculate the refraction rays for fresnel effects
     int sign = -1; if (ray.refract) { sign = 1; }
     Vector memory refraction = norm(div(sub(mul(ray.direction, nnt), mul(normal, sign * (ddn * nnt / 1000000 + sqrt(cos2t)))), 1000000));
@@ -427,14 +427,14 @@ contract SnailTracer {
 
     // Split a direct hit, otherwise trace only one ray
     if (ray.depth <= 2) {
-      refraction = mul(radiance(Ray(intersect, refraction, ray.depth, !ray.refract)), 1000000 - re); // Reuse refraction variable (lame)
-      refraction = add(refraction, mul(specular(ray, intersect, normal), re));
+      refraction = mul(radiance(Ray(intersection, refraction, ray.depth, !ray.refract)), 1000000 - re); // Reuse refraction variable (lame)
+      refraction = add(refraction, mul(specular(ray, intersection, normal), re));
       return div(refraction, 1000000);
     }
     if (rand() % 1000000 < 250000 + re / 2) {
-      return div(mul(specular(ray, intersect, normal), re), 250000 + re / 2);
+      return div(mul(specular(ray, intersection, normal), re), 250000 + re / 2);
     }
-    return div(mul(radiance(Ray(intersect, refraction, ray.depth, !ray.refract)), 1000000 - re), 750000 - re / 2);
+    return div(mul(radiance(Ray(intersection, refraction, ray.depth, !ray.refract)), 1000000 - re), 750000 - re / 2);
   }
   // traceray calculates the intersection of a ray with all the objects and
   // returns the closest one.
