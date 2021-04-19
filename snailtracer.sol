@@ -67,7 +67,7 @@ contract SnailTracer {
   // SPP renderings which would have a huge overhead otherwise.
   function TracePixel(int x, int y, int spp) public returns (bytes1 r, bytes1 g, bytes1 b) {
     Vector memory color = trace(x, y, spp);
-    return (bytes1(int8(color.x)), bytes1(int8(color.y)), bytes1(int8(color.z)));
+    return (bytes1(uint8(int8(color.x))), bytes1(uint8(int8(color.y))), bytes1(uint8(int8(color.z))));
   }
   // TraceScanline traces a single horizontal scanline of the configured image and
   // returns the RGB pixel value array. This method should be used for lower SPP
@@ -76,9 +76,9 @@ contract SnailTracer {
     for (int x = 0; x < width; x++) {
       Vector memory color = trace(x, y, spp);
 
-      buffer.push(bytes1(int8(color.x)));
-      buffer.push(bytes1(int8(color.y)));
-      buffer.push(bytes1(int8(color.z)));
+      buffer.push(bytes1(uint8(int8(color.x))));
+      buffer.push(bytes1(uint8(int8(color.y))));
+      buffer.push(bytes1(uint8(int8(color.z))));
     }
     return buffer;
   }
@@ -91,9 +91,9 @@ contract SnailTracer {
       for (int x = 0; x < width; x++) {
         Vector memory color = trace(x, y, spp);
 
-        buffer.push(bytes1(int8(color.x)));
-        buffer.push(bytes1(int8(color.y)));
-        buffer.push(bytes1(int8(color.z)));
+        buffer.push(bytes1(uint8(int8(color.x))));
+        buffer.push(bytes1(uint8(int8(color.y))));
+        buffer.push(bytes1(uint8(int8(color.z))));
       }
     }
     return buffer;
@@ -116,7 +116,7 @@ contract SnailTracer {
     color = add(color, trace(522, 524, 8)); // Reflective surface mirroring the refractive surface reflecting the light
     color = div(color, 4);
 
-    return (bytes1(int8(color.x)), bytes1(int8(color.y)), bytes1(int8(color.z)));
+    return (bytes1(uint8(int8(color.x))), bytes1(uint8(int8(color.y))), bytes1(uint8(int8(color.z))));
   }
   // trace executes the path tracing for a single pixel of the result image and
   // returns the RGB color Vector normalized to [0, 256) value range.
