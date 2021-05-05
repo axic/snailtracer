@@ -121,11 +121,11 @@ contract SnailTracer {
   // trace executes the path tracing for a single pixel of the result image and
   // returns the RGB color Vector normalized to [0, 256) value range.
   function trace(int x, int y, int spp) internal returns (Vector memory color) {
-    seed = uint32(y * width + x); // Deterministic image irrelevant of render chunks
+    seed = uint32(int32(y * width + x)); // Deterministic image irrelevant of render chunks
 
     delete(color);
     for (int k=0; k<spp; k++) {
-      Vector memory pixel = add(div(add(mul(deltaX, (1000000*x + rand()%500000)/width - 500000), mul(deltaY, (1000000*y + rand()%500000)/height - 500000)), 1000000), camera.direction);
+      Vector memory pixel = add(div(add(mul(deltaX, (1000000*x + int32(rand())%500000)/width - 500000), mul(deltaY, (1000000*y + int32(rand())%500000)/height - 500000)), 1000000), camera.direction);
       Ray    memory ray   = Ray(add(camera.origin, mul(pixel, 140)), norm(pixel), 0, false);
 
       color = add(color, div(radiance(ray), spp));
@@ -341,7 +341,7 @@ contract SnailTracer {
     }
     ray.depth++;
     if (ray.depth > 5) {
-      if (rand() % 1000000 < ref) {
+      if (int32(rand()) % 1000000 < ref) {
         color = div(mul(color, 1000000), ref);
       } else {
         return emission;
@@ -394,8 +394,8 @@ contract SnailTracer {
   }
   function diffuse(Ray memory ray, Vector memory intersection, Vector memory normal) internal returns (Vector memory) {
     // Generate a random angle and distance from center
-    int r1 = int(6283184) * (rand() % 1000000) / 1000000;
-    int r2 = rand() % 1000000; int r2s = sqrt(r2) * 1000;
+    int r1 = int(6283184) * (int32(rand() % 1000000)) / 1000000;
+    int r2 = int32(rand() % 1000000); int r2s = sqrt(r2) * 1000;
 
     // Create orthonormal coordinate frame
     Vector memory u;
@@ -433,7 +433,7 @@ contract SnailTracer {
       refraction = add(refraction, mul(specular(ray, intersection, normal), re));
       return div(refraction, 1000000);
     }
-    if (rand() % 1000000 < 250000 + re / 2) {
+    if (int32(rand()) % 1000000 < 250000 + re / 2) {
       return div(mul(specular(ray, intersection, normal), re), 250000 + re / 2);
     }
     return div(mul(radiance(Ray(intersection, refraction, ray.depth, !ray.refract)), 1000000 - re), 750000 - re / 2);
